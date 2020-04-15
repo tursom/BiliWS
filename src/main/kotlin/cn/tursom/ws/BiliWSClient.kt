@@ -225,6 +225,22 @@ class BiliWSClient(
     return addCmdListener(msg.value, action)
   }
 
+  inline fun <reified T : Any> addTypedCmdListener(
+    msg: String,
+    crossinline action: BiliWSClient.(T) -> Unit
+  ): Listener {
+    return addCmdListener(msg) {
+      this.action(Parser.parse(it, T::class.java)!!)
+    }
+  }
+
+  inline fun <reified T : Any> addTypedCmdListener(
+    msg: CmdEnum,
+    crossinline action: BiliWSClient.(T) -> Unit
+  ): Listener {
+    return addTypedCmdListener<T>(msg.value, action)
+  }
+
   fun addCodeListener(code: BiliLiveWSCode, action: BiliWSClient.(ByteArray) -> Unit) =
     addCodeListener(code.code, action)
 
