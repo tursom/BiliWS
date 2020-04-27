@@ -227,19 +227,34 @@ class BiliWSClient(
 
   inline fun <reified T : Any> addTypedCmdListener(
     msg: String,
+    vararg valuePath: String,
     crossinline action: BiliWSClient.(T) -> Unit
   ): Listener {
     return addCmdListener(msg) {
-      this.action(Parser.parse(it, T::class.java)!!)
+      var data: Any = it
+      valuePath.forEach { key ->
+        data = data.cast<Map<String, Any>>()[key] ?: return@addCmdListener
+      }
+      this.action(Parser.parse(data, T::class.java)!!)
     }
   }
 
   inline fun <reified T : Any> addTypedCmdListener(
     msg: CmdEnum,
+    vararg valuePath: String,
     crossinline action: BiliWSClient.(T) -> Unit
-  ): Listener {
-    return addTypedCmdListener<T>(msg.value, action)
-  }
+  ): Listener = addTypedCmdListener(msg.value, *valuePath, action = action)
+
+
+  inline fun <reified T : Any> addTypedDataCmdListener(
+    msg: String,
+    crossinline action: BiliWSClient.(T) -> Unit
+  ): Listener = addTypedCmdListener(msg, "data", action = action)
+
+  inline fun <reified T : Any> addTypedDataCmdListener(
+    msg: CmdEnum,
+    crossinline action: BiliWSClient.(T) -> Unit
+  ): Listener = addTypedDataCmdListener(msg.value, action)
 
   fun addCodeListener(code: BiliLiveWSCode, action: BiliWSClient.(ByteArray) -> Unit) =
     addCodeListener(code.code, action)
