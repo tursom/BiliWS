@@ -7,6 +7,7 @@ import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
+import cn.tursom.storage.LiveTime
 import cn.tursom.utils.fromJson
 import cn.tursom.ws.danmu.DanmuInfo
 import com.google.gson.GsonBuilder
@@ -20,6 +21,7 @@ import kotlin.collections.set
 class BiliWSClient(
   val roomId: Int,
   private val onOpen: BiliWSClient.() -> Unit = {},
+  private val liveTime: LiveTime? = null,
   private val onClose: BiliWSClient.() -> Unit = {}
 ) {
   @Volatile
@@ -33,21 +35,11 @@ class BiliWSClient(
     ConcurrentHashMap<String, ConcurrentLinkedList<BiliWSClient.(Map<String, Any>) -> Unit>>()
   private val codeListenerMap = ConcurrentHashMap<Int, ConcurrentLinkedList<BiliWSClient.(ByteArray) -> Unit>>()
 
+
   val userInfo = RoomUtils.getLiveUserInfo(roomInfo.room_id)
 
   //val userInfo = Unit.clone<LiveUserData>()
   val userName: String get() = userInfo.info?.uname ?: roomId.toString()
-
-  init {
-    clientCollection.add(this)
-    addCmdListener(CmdEnum.LIVE) {
-      living = true
-      roomInfo = RoomUtils.getRoomInfo(roomId)
-    }
-    addCmdListener(CmdEnum.PREPARING) {
-      living = false
-    }
-  }
 
   @Volatile
   var living: Boolean = LiveStatusEnum.valueOf(roomInfo.live_status) == LiveStatusEnum.LIVING
@@ -56,6 +48,23 @@ class BiliWSClient(
         field = value
       }
     }
+
+  @Volatile
+  private var liveStart: Long = liveTime?.getLiveTime(roomId) ?: if (living) System.currentTimeMillis() else 0
+  val liveStartTime get() = liveStart
+
+  init {
+    clientCollection.add(this)
+    addCmdListener(CmdEnum.LIVE) {
+      living = true
+      roomInfo = RoomUtils.getRoomInfo(roomId)
+      liveStart = System.currentTimeMillis()
+      liveTime?.roomOnLive(roomId)
+    }
+    addCmdListener(CmdEnum.PREPARING) {
+      living = false
+    }
+  }
 
   fun getRoomInfo() = roomInfo
 

@@ -24,6 +24,8 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.2.3'
     implementation "com.google.code.gson:gson:2.8.2"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    api group: 'org.mapdb', name: 'mapdb', version: '3.0.8'
 }
 
 compileKotlin {
