@@ -1,10 +1,12 @@
 package cn.tursom.storage.impl
 
 import cn.tursom.core.cast
+import cn.tursom.core.datastruct.DefaultValueMap
 import cn.tursom.storage.LiveTime
 import org.mapdb.DB
 import org.mapdb.DBMaker
 import org.mapdb.HTreeMap
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * need impl mapdb
@@ -23,15 +25,9 @@ class FileLiveTime(
   ) : this(DBMaker.fileDB(dbPath).checksumHeaderBypass().make(), map)
 
   companion object {
-    val defaultDB by lazy {
-      DBMaker
-        .fileDB("live.map")
-        .checksumHeaderBypass()
-        .make()
-        .hashMap("FileLiveTimeStorage")
-        .createOrOpen()
-        .cast<HTreeMap<Int, Long>>()
-    }
-    val default by lazy { FileLiveTime() }
+    val map = DefaultValueMap<String, FileLiveTime>(ConcurrentHashMap()) { FileLiveTime(it) }
+    val defaultDB by lazy { map["live.map"].map }
+    val default by lazy { map["live.map"] }
+    fun forDB(db: String) = map[db]
   }
 }
