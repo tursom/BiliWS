@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation "cn.tursom:TursomServer:0.1"
+    //implementation "cn.tursom:TursomServer:0.1"
     implementation "cn.tursom:ws-client:0.1"
     implementation "cn.tursom:utils:0.1"
     implementation "cn.tursom:log:0.1"
