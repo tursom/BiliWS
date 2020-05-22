@@ -76,7 +76,7 @@ class BiliWSClient(
 
     logger.debug("room init: {}", roomInit)
     client?.close()
-    val serverConf = RoomUtils.getLiveServerConf(roomId).data
+    val serverConf = RoomUtils.getLiveServerConf(roomInfo.room_id).data
     val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
     val client = WebSocketClient(
       "ws${if (wsServer.wss_port != null) "s" else ""}://${
@@ -300,7 +300,8 @@ class BiliWSClient(
 
   companion object : Slf4jImpl() {
     // 用来监视ws连接情况的集合
-    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> = LinkedList()
+    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> =
+      ConcurrentLinkedQueue()
     val gson = GsonBuilder()
       .registerTypeAdapterFactory(DataTypeAdaptor.FACTORY)
       .create()
@@ -313,21 +314,22 @@ class BiliWSClient(
         try {
           clientCollection.forEach { (it, connectionCheckFaildTimes) ->
             try {
-              when {
-                it.connection -> connectionCheckFaildTimes.set(0)
-                connectionCheckFaildTimes.incrementAndGet() == 3 ||
-                    connectionCheckFaildTimes.get().isPower2() ->
-                  it.connect()
+              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get().isPower2()) {
+                if (it.connection) {
+                  connectionCheckFaildTimes.set(0)
+                  return@forEach
+                }
+                it.connect()
               }
             } catch (e: Exception) {
             }
           }
         } catch (e: Throwable) {
           errLog.log(e)
-          logger.error("heart beat send exception: {}", e)
+          logger.error("reconnect exception: {}", e)
           throw e
         }
-      }, 1, 1, TimeUnit.MINUTES)
+      }, 0, 1, TimeUnit.MINUTES)
     }
 
     private fun Int.isPower2(): Boolean {
