@@ -1,6 +1,7 @@
 package cn.tursom.ws
 
 import cn.tursom.core.buffer.ByteBuffer
+import cn.tursom.core.buffer.impl.HeapByteBuffer
 
 data class BiliWSPackageHead(
   var totalSize: Int = 0,
@@ -9,6 +10,12 @@ data class BiliWSPackageHead(
   var code: Int = 0,
   var sequence: Int = 1
 ) {
+  fun toByteArray(): ByteArray {
+    val buffer = HeapByteBuffer(16)
+    writeTo(buffer)
+    return buffer.array
+  }
+
   fun writeTo(buffer: java.nio.ByteBuffer): BiliWSPackageHead {
     buffer.putInt(totalSize)
     buffer.putShort(headSize)

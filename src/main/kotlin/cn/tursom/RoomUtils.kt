@@ -55,6 +55,14 @@ object RoomUtils {
     return HttpRequest.doGet(liveServer).fromJson()
   }
 
+  fun getLiveServerConf(roomId: Int): WsServerConf {
+    return HttpRequest.doGet(
+      liveServer, mapOf(
+        "room_id" to roomId.toString(), "platform" to "pc", "player" to "web"
+      )
+    ).fromJson()
+  }
+
   /**
    * 该Header配置用于直播 api 信息查询
    */

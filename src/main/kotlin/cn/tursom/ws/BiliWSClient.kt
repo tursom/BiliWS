@@ -26,7 +26,6 @@ class BiliWSClient(
 ) {
   @Volatile
   private var connection: Boolean = false
-  private val connectionCheckFaildTimes = AtomicInteger()
   private var roomInfo: RoomInfoData = RoomUtils.getRoomInfo(roomId)
   private var client: WebSocketClient? = null
   private val livingListenerMap = ConcurrentLinkedList<() -> Unit>()
@@ -54,7 +53,7 @@ class BiliWSClient(
   val liveStartTime get() = liveStart
 
   init {
-    clientCollection.add(this)
+    clientCollection.add(this to AtomicInteger())
     addCmdListener(CmdEnum.LIVE) {
       living = true
       roomInfo = RoomUtils.getRoomInfo(roomId)
@@ -77,22 +76,26 @@ class BiliWSClient(
 
     logger.debug("room init: {}", roomInit)
     client?.close()
-    val serverConf = RoomUtils.getLiveServerConf().data
+    val serverConf = RoomUtils.getLiveServerConf(roomId).data
     val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
     val client = WebSocketClient(
       "ws${if (wsServer.wss_port != null) "s" else ""}://${
-      wsServer.host}:${wsServer.wss_port}/sub",
+      wsServer.host}:${wsServer.wss_port}/sub".apply {
+        logger.debug("connect to $this")
+      },
       object : WebSocketHandler {
         lateinit var future: Future<*>
         override fun onOpen(client: WebSocketClient) {
           connection = true
           logger.debug("WebSocketClient onOpen")
           val conn =
-            """{"uid": 0,"roomid": ${roomInit.data.room_id},"protover": 2,"platform": "web","clientver": "1.10.6","type": 2,"key":"${serverConf.token}"}"""
+            """{"uid": 0,"roomid": ${roomInit.data.room_id},"protover": 2,"platform": "web","clientver": "1.12.0","type": 2,"key":"${serverConf.token}"}"""
           logger.debug("msg: {}", +{ conn })
           val msg = conn.toByteArray()
           val data = HeapByteBuffer(16 + msg.size)
-          BiliWSPackageHead(16 + msg.size, 16, 1, 7, 1).writeTo(data)
+          BiliWSPackageHead(16 + msg.size, 16, 1, 7, 1).apply {
+            logger.debug("packet header: {}, {}", this, +{ toByteArray().toHexString() })
+          }.writeTo(data)
           data.put(msg)
           //logger.debug("buffer: {}", data.array.toHexString())
           client.write(data)
@@ -108,7 +111,7 @@ class BiliWSClient(
               logger.error("heart beat send exception: {}", e)
               throw e
             }
-          }, 30, 30, TimeUnit.SECONDS)
+          }, 0, 30, TimeUnit.SECONDS)
           this@BiliWSClient.onOpen()
         }
 
@@ -297,7 +300,7 @@ class BiliWSClient(
 
   companion object : Slf4jImpl() {
     // 用来监视ws连接情况的集合
-    private val clientCollection: MutableCollection<BiliWSClient> = LinkedList()
+    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> = LinkedList()
     val gson = GsonBuilder()
       .registerTypeAdapterFactory(DataTypeAdaptor.FACTORY)
       .create()
@@ -308,15 +311,15 @@ class BiliWSClient(
     ).apply {
       scheduleAtFixedRate({
         try {
-          clientCollection.forEach {
-            if (it.connection) {
-              it.connectionCheckFaildTimes.set(0)
-            } else if (it.connectionCheckFaildTimes.incrementAndGet() > 3) {
-              try {
-                it.connect()
-                it.connectionCheckFaildTimes.set(0)
-              } catch (e: Exception) {
+          clientCollection.forEach { (it, connectionCheckFaildTimes) ->
+            try {
+              when {
+                it.connection -> connectionCheckFaildTimes.set(0)
+                connectionCheckFaildTimes.incrementAndGet() == 3 ||
+                    connectionCheckFaildTimes.get().isPower2() ->
+                  it.connect()
               }
+            } catch (e: Exception) {
             }
           }
         } catch (e: Throwable) {
@@ -325,6 +328,22 @@ class BiliWSClient(
           throw e
         }
       }, 1, 1, TimeUnit.MINUTES)
+    }
+
+    private fun Int.isPower2(): Boolean {
+      var n = when {
+        this > 0 -> this
+        this == 0 -> return true
+        this < 0 -> -this
+        else -> return false
+      }
+      while (n != 1) {
+        if (n and 1 == 1) {
+          return false
+        }
+        n = n shr 1
+      }
+      return true
     }
   }
 }
