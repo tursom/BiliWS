@@ -1,5 +1,6 @@
 package cn.tursom.ws
 
+@Suppress("unused")
 enum class CmdEnum(val value: String) {
   ALL(""),
 
@@ -70,10 +71,40 @@ enum class CmdEnum(val value: String) {
   WELCOME_GUARD("WELCOME_GUARD"),
 
   // 希望瓶
-  WISH_BOTTLE("WISH_BOTTLE")
+  WISH_BOTTLE("WISH_BOTTLE"),
+
+  // 开始抽奖
+  RAFFLE_START("RAFFLE_START"),
+
+  // 抽奖结束
+  RAFFLE_END("RAFFLE_END"),
+
+  ROOM_SKIN_MSG("ROOM_SKIN_MSG"),
+
+  SPECIAL_GIFT("SPECIAL_GIFT"),
+
+  ROOM_SILENT_ON("ROOM_SILENT_ON"),
+
+  HOUR_RANK_AWARDS("HOUR_RANK_AWARDS"),
+
+  ROOM_BOX_MASTER("ROOM_BOX_MASTER"),
+
+  PK_BATTLE_ENTRANCE("PK_BATTLE_ENTRANCE"),
+
+  SYS_GIFT("SYS_GIFT"),
+
+  NEW_ANCHOR_REWARD("new_anchor_reward"),
+
+  VOICE_JOIN_LIST("VOICE_JOIN_LIST"),
+
+  GUARD_ACHIEVEMENT_ROOM("GUARD_ACHIEVEMENT_ROOM"),
+
+  VOICE_JOIN_ROOM_COUNT_INFO("VOICE_JOIN_ROOM_COUNT_INFO"),
+
+
   ;
 
   companion object {
-    val nameSet = CmdEnum.values().map { it.name }.toSet()
+    val nameSet = values().map { it.name }.toSet()
   }
 }
