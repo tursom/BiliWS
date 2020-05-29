@@ -17,7 +17,7 @@ dependencies {
     //implementation "cn.tursom:TursomServer:0.1"
     implementation "cn.tursom:ws-client:0.1"
     implementation "cn.tursom:utils:0.1"
-    implementation "cn.tursom:log:0.1"
+    compile "cn.tursom:log:0.1"
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.29'
     implementation group: 'ch.qos.logback', name: 'logback-core', version: '1.2.3'

@@ -11,7 +11,7 @@ import cn.tursom.storage.LiveTime
 import cn.tursom.utils.fromJson
 import cn.tursom.ws.danmu.DanmuInfo
 import com.google.gson.GsonBuilder
-import java.util.*
+import java.io.Closeable
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.annotation.PostConstruct
@@ -23,7 +23,7 @@ class BiliWSClient(
   private val onOpen: BiliWSClient.() -> Unit = {},
   private val liveTime: LiveTime? = null,
   private val onClose: BiliWSClient.() -> Unit = {}
-) {
+) : Closeable {
   @Volatile
   private var connection: Boolean = false
   private var roomInfo: RoomInfoData = RoomUtils.getRoomInfo(roomId)
@@ -53,7 +53,6 @@ class BiliWSClient(
   val liveStartTime get() = liveStart
 
   init {
-    clientCollection.add(this to AtomicInteger())
     addCmdListener(CmdEnum.LIVE) {
       living = true
       roomInfo = RoomUtils.getRoomInfo(roomId)
@@ -69,6 +68,10 @@ class BiliWSClient(
 
   @PostConstruct
   fun connect(onOpen: BiliWSClient.() -> Unit = this.onOpen) {
+    if (clientCollection.firstOrNull { it.first == this } == null) {
+      clientCollection.add(this to AtomicInteger())
+    }
+
     val roomInit = HttpRequest.doGet(
       "https://api.live.bilibili.com/room/v1/Room/room_init",
       mapOf("id" to roomId.toString())
@@ -298,10 +301,14 @@ class BiliWSClient(
     }
   }
 
+  override fun close() {
+    clientCollection.removeAll { it.first == this }
+    client?.close()
+  }
+
   companion object : Slf4jImpl() {
     // 用来监视ws连接情况的集合
-    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> =
-      ConcurrentLinkedQueue()
+    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> = ConcurrentLinkedQueue()
     val gson = GsonBuilder()
       .registerTypeAdapterFactory(DataTypeAdaptor.FACTORY)
       .create()
