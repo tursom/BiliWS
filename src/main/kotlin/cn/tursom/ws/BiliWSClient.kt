@@ -2,15 +2,20 @@ package cn.tursom.ws
 
 import cn.tursom.*
 import cn.tursom.core.*
+import cn.tursom.core.fromJson
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
+import cn.tursom.core.ws.WebSocketClient
+import cn.tursom.core.ws.WebSocketHandler
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
-import cn.tursom.utils.fromJson
 import cn.tursom.ws.danmu.DanmuInfo
 import com.google.gson.GsonBuilder
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.Closeable
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +31,7 @@ class BiliWSClient(
 ) : Closeable {
   @Volatile
   private var connection: Boolean = false
-  private var roomInfo: RoomInfoData = RoomUtils.getRoomInfo(roomId)
+  private var roomInfo: RoomInfoData = runBlocking { RoomUtils.getRoomInfo(roomId) }
   private var client: WebSocketClient? = null
   private val livingListenerMap = ConcurrentLinkedList<() -> Unit>()
   private val danmuListenerMap = ConcurrentLinkedList<(DanmuInfo) -> Unit>()
@@ -35,9 +40,10 @@ class BiliWSClient(
   private val codeListenerMap = ConcurrentHashMap<Int, ConcurrentLinkedList<BiliWSClient.(ByteArray) -> Unit>>()
 
 
-  val userInfo = RoomUtils.getLiveUserInfo(roomInfo.room_id)
+  val userInfo = runBlocking { RoomUtils.getLiveUserInfo(roomInfo.room_id) }
 
   //val userInfo = Unit.clone<LiveUserData>()
+  @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
   val userName: String get() = userInfo.info?.uname ?: roomId.toString()
 
   @Volatile
@@ -55,7 +61,7 @@ class BiliWSClient(
   init {
     addCmdListener(CmdEnum.LIVE) {
       living = true
-      roomInfo = RoomUtils.getRoomInfo(roomId)
+      roomInfo = runBlocking { RoomUtils.getRoomInfo(roomId) }
       liveStart = System.currentTimeMillis()
       liveTime?.roomOnLive(roomId)
     }
@@ -67,7 +73,7 @@ class BiliWSClient(
   fun getRoomInfo() = roomInfo
 
   @PostConstruct
-  fun connect(onOpen: BiliWSClient.() -> Unit = this.onOpen) {
+  suspend fun connect(onOpen: BiliWSClient.() -> Unit = this.onOpen) {
     if (clientCollection.firstOrNull { it.first == this } == null) {
       clientCollection.add(this to AtomicInteger())
     }
@@ -83,7 +89,8 @@ class BiliWSClient(
     val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
     val client = WebSocketClient(
       "ws${if (wsServer.wss_port != null) "s" else ""}://${
-      wsServer.host}:${wsServer.wss_port}/sub".apply {
+        wsServer.host
+      }:${wsServer.wss_port}/sub".apply {
         logger.debug("connect to $this")
       },
       object : WebSocketHandler {
@@ -127,33 +134,41 @@ class BiliWSClient(
           }
           onClose()
           threadPool.schedule({
-            connect()
+            GlobalScope.launch {
+              connect()
+            }
           }, 5, TimeUnit.SECONDS)
         }
 
-        override fun readMessage(client: WebSocketClient, msg: ByteBuffer): Unit = loop({ msg.readable != 0 }) {
-          val head = BiliWSPackageHead().readFrom(msg)
-          logger.debug("WebSocketClient onMessage: {}", msg)
-          logger.debug("WebSocketClient onMessage header: {}", head)
-          val bytes = msg.getBytes(head.totalSize - head.headSize)
-          when (head.version.toInt()) {
-            2 -> @Suppress("NAME_SHADOWING") {
-              val msg = HeapByteBuffer(bytes.undeflate())
-              loop({ msg.readable != 0 }) {
-                val head = BiliWSPackageHead().readFrom(msg)
-                val bytes = msg.getBytes(head.totalSize - head.headSize)
-                handleMessage(head, bytes)
+        override fun readMessage(client: WebSocketClient, msg: ByteBuffer) {
+          while (msg.readable != 0) {
+            val head = BiliWSPackageHead().readFrom(msg)
+            logger.debug("WebSocketClient onMessage: {}", msg)
+            logger.debug("WebSocketClient onMessage header: {}", head)
+            val bytes = msg.getBytes(head.totalSize - head.headSize)
+            when (head.version.toInt()) {
+              2 -> @Suppress("NAME_SHADOWING") {
+                val msg = HeapByteBuffer(bytes.undeflate())
+                while (msg.readable != 0) {
+                  val head = BiliWSPackageHead().readFrom(msg)
+                  val bytes = msg.getBytes(head.totalSize - head.headSize)
+                  handleMessage(head, bytes)
+                }
               }
+              0 -> handleMessage(head, bytes)
             }
-            0 -> handleMessage(head, bytes)
           }
         }
 
         fun handleMessage(head: BiliWSPackageHead, bytes: ByteArray) {
           logger.debug("WebSocketClient onMessage header: {}", head)
-          logger.debug(
-            "WebSocketClient onMessage msg:\n|- hex: {}\n|- UTF-8: {}\n|- undeflate: {}",
+          logger.trace(
+            "WebSocketClient onMessage msg:\n|- hex: {}\n|- UTF-8: {}",
             +{ bytes.toHexString() },
+            +{ bytes.toUTF8String() }
+          )
+          logger.debug(
+            "WebSocketClient onMessage msg: {}",
             +{ bytes.toUTF8String() }
           )
           threadPool.execute {
@@ -326,7 +341,9 @@ class BiliWSClient(
                   connectionCheckFaildTimes.set(0)
                   return@forEach
                 }
-                it.connect()
+                GlobalScope.launch {
+                  it.connect()
+                }
               }
             } catch (e: Exception) {
             }
