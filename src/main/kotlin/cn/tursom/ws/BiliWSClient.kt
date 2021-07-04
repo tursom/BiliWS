@@ -11,6 +11,7 @@ import cn.tursom.core.ws.WebSocketHandler
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
+import cn.tursom.utils.AsyncHttpRequest
 import cn.tursom.ws.danmu.DanmuInfo
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.GlobalScope
@@ -78,7 +79,7 @@ class BiliWSClient(
       clientCollection.add(this to AtomicInteger())
     }
 
-    val roomInit = HttpRequest.doGet(
+    val roomInit = AsyncHttpRequest.getStr(
       "https://api.live.bilibili.com/room/v1/Room/room_init",
       mapOf("id" to roomId.toString())
     ).fromJson<RoomInit>()

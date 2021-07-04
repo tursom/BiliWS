@@ -1,5 +1,6 @@
 package cn.tursom
 
+import cn.tursom.core.urlEncode
 import cn.tursom.exception.LiveException
 
 enum class LiveStatusEnum {
@@ -27,4 +28,9 @@ enum class LiveStatusEnum {
       else -> throw LiveException("无法获取直播状态")
     }
   }
+}
+
+
+fun main() {
+  println("/test.png".urlEncode)
 }
