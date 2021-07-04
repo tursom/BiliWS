@@ -28,7 +28,7 @@ class BiliWSClient(
   val roomId: Int,
   private val onOpen: BiliWSClient.() -> Unit = {},
   private val liveTime: LiveTime? = null,
-  private val onClose: BiliWSClient.() -> Unit = {}
+  private val onClose: BiliWSClient.() -> Unit = {},
 ) : Closeable {
   @Volatile
   private var connection: Boolean = false
@@ -45,7 +45,8 @@ class BiliWSClient(
 
   //val userInfo = Unit.clone<LiveUserData>()
   @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
-  val userName: String get() = userInfo.info?.uname ?: roomId.toString()
+  val userName: String
+    get() = userInfo.info?.uname ?: roomId.toString()
 
   @Volatile
   var living: Boolean = LiveStatusEnum.valueOf(roomInfo.live_status) == LiveStatusEnum.LIVING
@@ -60,6 +61,9 @@ class BiliWSClient(
   val liveStartTime get() = liveStart
 
   init {
+    ShutdownHook.addHook {
+      close()
+    }
     addCmdListener(CmdEnum.LIVE) {
       living = true
       roomInfo = runBlocking { RoomUtils.getRoomInfo(roomId) }
@@ -259,7 +263,7 @@ class BiliWSClient(
   inline fun <reified T : Any> addTypedCmdListener(
     msg: String,
     vararg valuePath: String,
-    crossinline action: BiliWSClient.(T) -> Unit
+    crossinline action: BiliWSClient.(T) -> Unit,
   ): Listener {
     return addCmdListener(msg) {
       var data: Any = it
@@ -273,18 +277,18 @@ class BiliWSClient(
   inline fun <reified T : Any> addTypedCmdListener(
     msg: CmdEnum,
     vararg valuePath: String,
-    crossinline action: BiliWSClient.(T) -> Unit
+    crossinline action: BiliWSClient.(T) -> Unit,
   ): Listener = addTypedCmdListener(msg.value, *valuePath, action = action)
 
 
   inline fun <reified T : Any> addTypedDataCmdListener(
     msg: String,
-    crossinline action: BiliWSClient.(T) -> Unit
+    crossinline action: BiliWSClient.(T) -> Unit,
   ): Listener = addTypedCmdListener(msg, "data", action = action)
 
   inline fun <reified T : Any> addTypedDataCmdListener(
     msg: CmdEnum,
-    crossinline action: BiliWSClient.(T) -> Unit
+    crossinline action: BiliWSClient.(T) -> Unit,
   ): Listener = addTypedDataCmdListener(msg.value, action)
 
   fun addCodeListener(code: BiliLiveWSCode, action: BiliWSClient.(ByteArray) -> Unit) =
