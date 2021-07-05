@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.annotation.PostConstruct
 import kotlin.collections.set
 
-
+@OptIn(UncheckedCast::class)
 class BiliWSClient(
   val roomId: Int,
   private val onOpen: BiliWSClient.() -> Unit = {},

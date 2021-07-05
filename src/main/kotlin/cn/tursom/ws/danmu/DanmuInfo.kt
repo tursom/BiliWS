@@ -1,7 +1,9 @@
 package cn.tursom.ws.danmu
 
+import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
 
+@OptIn(UncheckedCast::class)
 data class DanmuInfo(
   val metaData: DanmuMetaData,
   val danmu: String,

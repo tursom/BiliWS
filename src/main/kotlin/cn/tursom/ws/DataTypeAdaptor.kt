@@ -1,5 +1,6 @@
 package cn.tursom.ws
 
+import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -12,6 +13,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import java.util.ArrayList
 
+@OptIn(UncheckedCast::class)
 class DataTypeAdaptor internal constructor(private val gson: Gson) : TypeAdapter<Map<String, Any>?>() {
   override fun write(out: JsonWriter, value: Map<String, Any>?) {
     if (value == null) {
