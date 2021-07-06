@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.5.20"
-  id("maven")
+  `maven-publish`
 }
 
 group = "cn.tursom"
@@ -41,4 +41,28 @@ tasks.withType<KotlinCompile>().configureEach {
 //打包源代码
 artifacts {
   archives(tasks["kotlinSourcesJar"])
+}
+
+tasks.register("install") {
+  finalizedBy(tasks["publishToMavenLocal"])
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("maven") {
+      groupId = project.group.toString()
+      artifactId = project.name
+      version = project.version.toString()
+
+      from(components["java"])
+      try {
+        artifact(tasks["sourcesJar"])
+      } catch (e: Exception) {
+        try {
+          artifact(tasks["kotlinSourcesJar"])
+        } catch (e: Exception) {
+        }
+      }
+    }
+  }
 }
