@@ -28,5 +28,13 @@ enum class NavigationEnum(val code: Int, val protobufValue: Record.NavigationEnu
       3 -> CAPTAIN
       else -> throw IndexOutOfBoundsException()
     }
+
+    fun fromProtobuf(navigationEnum: Record.NavigationEnum) = when (navigationEnum) {
+      Record.NavigationEnum.NONE -> NONE
+      Record.NavigationEnum.GOVERNOR -> GOVERNOR
+      Record.NavigationEnum.ADMIRAL -> ADMIRAL
+      Record.NavigationEnum.CAPTAIN -> CAPTAIN
+      Record.NavigationEnum.UNRECOGNIZED -> NONE
+    }
   }
 }

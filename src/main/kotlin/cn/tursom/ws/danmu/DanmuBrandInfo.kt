@@ -28,5 +28,12 @@ data class DanmuBrandInfo(
         roomId = brand[3].cast()
       )
     }
+
+    fun fromProtobuf(brandInfo: Record.DanmuBrandInfo) = DanmuBrandInfo(
+      brandInfo.level,
+      brandInfo.sing,
+      brandInfo.anchor,
+      brandInfo.roomId
+    )
   }
 }

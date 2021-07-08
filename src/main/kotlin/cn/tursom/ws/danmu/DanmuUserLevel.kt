@@ -26,5 +26,10 @@ data class DanmuUserLevel(
         }
       )
     }
+
+    fun fromProtobuf(userLevel: Record.DanmuUserLevel) = DanmuUserLevel(
+      userLevel.level,
+      userLevel.ranking
+    )
   }
 }

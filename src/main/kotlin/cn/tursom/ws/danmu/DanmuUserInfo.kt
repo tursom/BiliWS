@@ -40,5 +40,13 @@ data class DanmuUserInfo(
         svip = userInfo[4].cast<Number>().toInt() != 0
       )
     }
+
+    fun fromProtobuf(userInfo: Record.DanmuUserInfo) = DanmuUserInfo(
+      userInfo.uid,
+      userInfo.nickname,
+      userInfo.admin,
+      userInfo.vip,
+      userInfo.svip
+    )
   }
 }

@@ -10,7 +10,7 @@ message RecordMsg {
 
 message DanmuInfo {
   string         danmu      = 1;
-  DanmuMetaData  metaData   = 2;
+  DanmuMetadata  metadata   = 2;
   DanmuUserInfo  userInfo   = 3;
   DanmuBrandInfo brandInfo  = 4;
   DanmuUserLevel userLevel  = 5;
@@ -19,7 +19,7 @@ message DanmuInfo {
   string         originData = 8;
 }
 
-message DanmuMetaData {
+message DanmuMetadata {
   int64 time        = 1;
   bool  rhythmStorm = 2;
 }

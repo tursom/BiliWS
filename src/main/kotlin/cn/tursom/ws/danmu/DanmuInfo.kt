@@ -7,7 +7,7 @@ import cn.tursom.danmu.Record
 
 @OptIn(UncheckedCast::class)
 data class DanmuInfo(
-  val metaData: DanmuMetaData,
+  val metadata: DanmuMetadata,
   val danmu: String,
   val userInfo: DanmuUserInfo,
   val brandInfo: DanmuBrandInfo?,
@@ -16,21 +16,25 @@ data class DanmuInfo(
   val navigation: NavigationEnum,
   val originData: List<Any>,
 ) {
-  fun toProtobuf(): Record.DanmuInfo = Record.DanmuInfo.newBuilder()
-    .setMetaData(metaData.toProtobuf())
-    .setDanmu(danmu)
-    .setUserInfo(userInfo.toProtobuf())
-    .setBrandInfo(brandInfo?.toProtobuf() ?: Record.DanmuBrandInfo.getDefaultInstance())
-    .setUserLevel(userLevel.toProtobuf())
-    .setUserTitle(userTitle)
-    .setNavigation(navigation.protobufValue)
-    .setOriginData(originData.toJson())
-    .build()
+  fun toProtobuf(originData: Boolean = false): Record.DanmuInfo {
+    val builder = Record.DanmuInfo.newBuilder()
+      .setMetadata(metadata.toProtobuf())
+      .setDanmu(danmu)
+      .setUserInfo(userInfo.toProtobuf())
+      .setBrandInfo(brandInfo?.toProtobuf() ?: Record.DanmuBrandInfo.getDefaultInstance())
+      .setUserLevel(userLevel.toProtobuf())
+      .setUserTitle(userTitle)
+      .setNavigation(navigation.protobufValue)
+    if (originData) {
+      builder.originData = this.originData.toJson()
+    }
+    return builder.build()
+  }
 
   companion object {
     fun parse(danmu: List<Any>): DanmuInfo {
       return DanmuInfo(
-        metaData = DanmuMetaData.parse(danmu[0].cast()),
+        metadata = DanmuMetadata.parse(danmu[0].cast()),
         danmu = danmu[1].cast(),
         userInfo = DanmuUserInfo.parse(danmu[2].cast()),
         brandInfo = DanmuBrandInfo.parse(danmu[3].cast()),
@@ -43,6 +47,6 @@ data class DanmuInfo(
   }
 
   override fun toString(): String {
-    return "DanmuInfo(metaData=$metaData, danmu='$danmu', userInfo=$userInfo, brandInfo=$brandInfo, userLevel=$userLevel, userTitle='$userTitle', navigation=$navigation)"
+    return "DanmuInfo(metaData=$metadata, danmu='$danmu', userInfo=$userInfo, brandInfo=$brandInfo, userLevel=$userLevel, userTitle='$userTitle', navigation=$navigation)"
   }
 }

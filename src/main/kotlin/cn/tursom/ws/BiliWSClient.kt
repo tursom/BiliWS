@@ -6,6 +6,7 @@ import cn.tursom.core.fromJson
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
+import cn.tursom.core.reflect.Parser
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
 import cn.tursom.core.ws.WebSocketClient
