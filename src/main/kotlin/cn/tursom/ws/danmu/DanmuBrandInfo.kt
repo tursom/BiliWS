@@ -1,8 +1,10 @@
 package cn.tursom.ws.danmu
 
+import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
 import cn.tursom.danmu.Record
 
+@OptIn(UncheckedCast::class)
 data class DanmuBrandInfo(
   val level: Int,
   val sigh: String,

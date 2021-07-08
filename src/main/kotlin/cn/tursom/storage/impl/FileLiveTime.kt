@@ -1,5 +1,6 @@
 package cn.tursom.storage.impl
 
+import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
 import cn.tursom.core.datastruct.DefaultValueMap
 import cn.tursom.storage.LiveTime
@@ -11,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * need impl mapdb
  */
+@OptIn(UncheckedCast::class)
 class FileLiveTime(
   private val map: HTreeMap<Int, Long> = defaultDB
 ) : LiveTime by MapLiveTime(map) {
