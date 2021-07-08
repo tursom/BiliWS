@@ -2,5 +2,5 @@
 .idea
 build
 gradle
-src/test
 gradle.properties
+src/main/java/cn/tursom/danmu
