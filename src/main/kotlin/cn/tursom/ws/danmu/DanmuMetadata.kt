@@ -2,14 +2,14 @@ package cn.tursom.ws.danmu
 
 import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)
 data class DanmuMetadata(
   val time: Long,
   val rhythmStorm: Boolean,
 ) {
-  fun toProtobuf(): Record.DanmuMetadata = Record.DanmuMetadata.newBuilder()
+  fun toProtobuf(): Danmu.DanmuMetadata = Danmu.DanmuMetadata.newBuilder()
     .setTime(time)
     .setRhythmStorm(rhythmStorm)
     .build()
@@ -22,7 +22,7 @@ data class DanmuMetadata(
       )
     }
 
-    fun fromProtobuf(metadata: Record.DanmuMetadata) = DanmuMetadata(
+    fun fromProtobuf(metadata: Danmu.DanmuMetadata) = DanmuMetadata(
       metadata.time,
       metadata.rhythmStorm
     )

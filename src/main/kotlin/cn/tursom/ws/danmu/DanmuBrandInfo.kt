@@ -2,7 +2,7 @@ package cn.tursom.ws.danmu
 
 import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)
 data class DanmuBrandInfo(
@@ -11,7 +11,7 @@ data class DanmuBrandInfo(
   val anchor: String,
   val roomId: Int,
 ) {
-  fun toProtobuf(): Record.DanmuBrandInfo = Record.DanmuBrandInfo.newBuilder()
+  fun toProtobuf(): Danmu.DanmuBrandInfo = Danmu.DanmuBrandInfo.newBuilder()
     .setLevel(level)
     .setSing(sigh)
     .setAnchor(anchor)
@@ -29,7 +29,7 @@ data class DanmuBrandInfo(
       )
     }
 
-    fun fromProtobuf(brandInfo: Record.DanmuBrandInfo) = DanmuBrandInfo(
+    fun fromProtobuf(brandInfo: Danmu.DanmuBrandInfo) = DanmuBrandInfo(
       brandInfo.level,
       brandInfo.sing,
       brandInfo.anchor,

@@ -3,10 +3,7 @@ syntax = "proto3";
 option optimize_for = SPEED;
 
 package cn.tursom.danmu;
-option java_outer_classname = "Record";
-
-message RecordMsg {
-}
+option java_outer_classname = "Danmu";
 
 message DanmuInfo {
   string         danmu      = 1;

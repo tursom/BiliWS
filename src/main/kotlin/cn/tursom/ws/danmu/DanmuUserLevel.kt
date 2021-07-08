@@ -2,14 +2,14 @@ package cn.tursom.ws.danmu
 
 import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)
 data class DanmuUserLevel(
   val level: Int,
   val ranking: String,
 ) {
-  fun toProtobuf(): Record.DanmuUserLevel = Record.DanmuUserLevel.newBuilder()
+  fun toProtobuf(): Danmu.DanmuUserLevel = Danmu.DanmuUserLevel.newBuilder()
     .setLevel(level)
     .setRanking(ranking)
     .build()
@@ -27,7 +27,7 @@ data class DanmuUserLevel(
       )
     }
 
-    fun fromProtobuf(userLevel: Record.DanmuUserLevel) = DanmuUserLevel(
+    fun fromProtobuf(userLevel: Danmu.DanmuUserLevel) = DanmuUserLevel(
       userLevel.level,
       userLevel.ranking
     )

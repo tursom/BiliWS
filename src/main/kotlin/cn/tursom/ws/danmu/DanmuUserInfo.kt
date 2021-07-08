@@ -2,7 +2,7 @@ package cn.tursom.ws.danmu
 
 import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)
 data class DanmuUserInfo(
@@ -22,7 +22,7 @@ data class DanmuUserInfo(
   @Suppress("SpellCheckingInspection")
   val svip: Boolean,
 ) {
-  fun toProtobuf(): Record.DanmuUserInfo = Record.DanmuUserInfo.newBuilder()
+  fun toProtobuf(): Danmu.DanmuUserInfo = Danmu.DanmuUserInfo.newBuilder()
     .setUid(uid)
     .setNickname(nickname)
     .setAdmin(admin)
@@ -41,7 +41,7 @@ data class DanmuUserInfo(
       )
     }
 
-    fun fromProtobuf(userInfo: Record.DanmuUserInfo) = DanmuUserInfo(
+    fun fromProtobuf(userInfo: Danmu.DanmuUserInfo) = DanmuUserInfo(
       userInfo.uid,
       userInfo.nickname,
       userInfo.admin,

@@ -1,24 +1,24 @@
 package cn.tursom.ws.danmu
 
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
-enum class NavigationEnum(val code: Int, val protobufValue: Record.NavigationEnum) {
-  NONE(0, Record.NavigationEnum.NONE),
+enum class NavigationEnum(val code: Int, val protobufValue: Danmu.NavigationEnum) {
+  NONE(0, Danmu.NavigationEnum.NONE),
 
   /**
    * 总督
    */
-  GOVERNOR(1, Record.NavigationEnum.GOVERNOR),
+  GOVERNOR(1, Danmu.NavigationEnum.GOVERNOR),
 
   /**
    * 提督
    */
-  ADMIRAL(2, Record.NavigationEnum.ADMIRAL),
+  ADMIRAL(2, Danmu.NavigationEnum.ADMIRAL),
 
   /**
    * 舰长
    */
-  CAPTAIN(3, Record.NavigationEnum.CAPTAIN);
+  CAPTAIN(3, Danmu.NavigationEnum.CAPTAIN);
 
   companion object {
     fun valueOf(code: Int): NavigationEnum = when (code) {
@@ -29,12 +29,12 @@ enum class NavigationEnum(val code: Int, val protobufValue: Record.NavigationEnu
       else -> throw IndexOutOfBoundsException()
     }
 
-    fun fromProtobuf(navigationEnum: Record.NavigationEnum) = when (navigationEnum) {
-      Record.NavigationEnum.NONE -> NONE
-      Record.NavigationEnum.GOVERNOR -> GOVERNOR
-      Record.NavigationEnum.ADMIRAL -> ADMIRAL
-      Record.NavigationEnum.CAPTAIN -> CAPTAIN
-      Record.NavigationEnum.UNRECOGNIZED -> NONE
+    fun fromProtobuf(navigationEnum: Danmu.NavigationEnum) = when (navigationEnum) {
+      Danmu.NavigationEnum.NONE -> NONE
+      Danmu.NavigationEnum.GOVERNOR -> GOVERNOR
+      Danmu.NavigationEnum.ADMIRAL -> ADMIRAL
+      Danmu.NavigationEnum.CAPTAIN -> CAPTAIN
+      Danmu.NavigationEnum.UNRECOGNIZED -> NONE
     }
   }
 }

@@ -3,7 +3,7 @@ package cn.tursom.ws.danmu
 import cn.tursom.core.UncheckedCast
 import cn.tursom.core.cast
 import cn.tursom.core.toJson
-import cn.tursom.danmu.Record
+import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)
 data class DanmuInfo(
@@ -16,12 +16,12 @@ data class DanmuInfo(
   val navigation: NavigationEnum,
   val originData: List<Any>,
 ) {
-  fun toProtobuf(originData: Boolean = false): Record.DanmuInfo {
-    val builder = Record.DanmuInfo.newBuilder()
+  fun toProtobuf(originData: Boolean = false): Danmu.DanmuInfo {
+    val builder = Danmu.DanmuInfo.newBuilder()
       .setMetadata(metadata.toProtobuf())
       .setDanmu(danmu)
       .setUserInfo(userInfo.toProtobuf())
-      .setBrandInfo(brandInfo?.toProtobuf() ?: Record.DanmuBrandInfo.getDefaultInstance())
+      .setBrandInfo(brandInfo?.toProtobuf() ?: Danmu.DanmuBrandInfo.getDefaultInstance())
       .setUserLevel(userLevel.toProtobuf())
       .setUserTitle(userTitle)
       .setNavigation(navigation.protobufValue)
