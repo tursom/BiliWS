@@ -1,19 +1,24 @@
 package cn.tursom.ws.danmu
 
-enum class NavigationEnum(val code: Int) {
-  NONE(0),
+import cn.tursom.danmu.Record
+
+enum class NavigationEnum(val code: Int, val protobufValue: Record.NavigationEnum) {
+  NONE(0, Record.NavigationEnum.NONE),
+
   /**
    * 总督
    */
-  GOVERNOR(1),
+  GOVERNOR(1, Record.NavigationEnum.GOVERNOR),
+
   /**
    * 提督
    */
-  ADMIRAL(2),
+  ADMIRAL(2, Record.NavigationEnum.ADMIRAL),
+
   /**
    * 舰长
    */
-  CAPTAIN(3);
+  CAPTAIN(3, Record.NavigationEnum.CAPTAIN);
 
   companion object {
     fun valueOf(code: Int): NavigationEnum = when (code) {

@@ -1,6 +1,8 @@
 package cn.tursom.ws.danmu
 
 import cn.tursom.core.cast
+import cn.tursom.core.toJson
+import cn.tursom.danmu.Record
 
 data class DanmuInfo(
   val metaData: DanmuMetaData,
@@ -10,8 +12,18 @@ data class DanmuInfo(
   val userLevel: DanmuUserLevel,
   val userTitle: String,
   val navigation: NavigationEnum,
-  val originData: List<Any>
+  val originData: List<Any>,
 ) {
+  fun toProtobuf(): Record.DanmuInfo = Record.DanmuInfo.newBuilder()
+    .setMetaData(metaData.toProtobuf())
+    .setDanmu(danmu)
+    .setUserInfo(userInfo.toProtobuf())
+    .setBrandInfo(brandInfo?.toProtobuf() ?: Record.DanmuBrandInfo.getDefaultInstance())
+    .setUserLevel(userLevel.toProtobuf())
+    .setUserTitle(userTitle)
+    .setNavigation(navigation.protobufValue)
+    .setOriginData(originData.toJson())
+    .build()
 
   companion object {
     fun parse(danmu: List<Any>): DanmuInfo {

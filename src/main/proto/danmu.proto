@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option optimize_for = SPEED;
+
+package cn.tursom.danmu;
+option java_outer_classname = "Record";
+
+message RecordMsg {
+}
+
+message DanmuInfo {
+  string         danmu      = 1;
+  DanmuMetaData  metaData   = 2;
+  DanmuUserInfo  userInfo   = 3;
+  DanmuBrandInfo brandInfo  = 4;
+  DanmuUserLevel userLevel  = 5;
+  string         userTitle  = 6;
+  NavigationEnum navigation = 7;
+  string         originData = 8;
+}
+
+message DanmuMetaData {
+  int64 time        = 1;
+  bool  rhythmStorm = 2;
+}
+
+message DanmuUserInfo {
+  int32  uid      = 1;
+  string nickname = 2;
+  bool   admin    = 3;
+  bool   vip      = 4;
+  bool   svip     = 5;
+}
+
+message DanmuBrandInfo {
+  int32  level  = 1;
+  string sing   = 2;
+  string anchor = 3;
+  int32  roomId = 4;
+}
+
+message DanmuUserLevel {
+  int32  level   = 1;
+  string ranking = 2;
+}
+
+enum NavigationEnum {
+  NONE     = 0;
+  GOVERNOR = 1;
+  ADMIRAL  = 2;
+  CAPTAIN  = 3;
+}
+
+

@@ -6,6 +6,8 @@ import cn.tursom.core.fromJson
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
+import cn.tursom.core.ws.SimpWebSocketClient
+import cn.tursom.core.ws.SimpWebSocketHandler
 import cn.tursom.core.ws.WebSocketClient
 import cn.tursom.core.ws.WebSocketHandler
 import cn.tursom.log.impl.Slf4jImpl
@@ -33,7 +35,7 @@ class BiliWSClient(
   @Volatile
   private var connection: Boolean = false
   private var roomInfo: RoomInfoData = runBlocking { RoomUtils.getRoomInfo(roomId) }
-  private var client: WebSocketClient? = null
+  private var client: SimpWebSocketClient<SimpWebSocketHandler>? = null
   private val livingListenerMap = ConcurrentLinkedList<() -> Unit>()
   private val danmuListenerMap = ConcurrentLinkedList<(DanmuInfo) -> Unit>()
   private val cmdListenerMap =
@@ -92,15 +94,15 @@ class BiliWSClient(
     client?.close()
     val serverConf = RoomUtils.getLiveServerConf(roomInfo.room_id).data
     val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
-    val client = WebSocketClient(
+    val client = SimpWebSocketClient(
       "ws${if (wsServer.wss_port != null) "s" else ""}://${
         wsServer.host
       }:${wsServer.wss_port}/sub".apply {
         logger.debug("connect to $this")
       },
-      object : WebSocketHandler {
+      object : SimpWebSocketHandler {
         lateinit var future: Future<*>
-        override fun onOpen(client: WebSocketClient) {
+        override fun onOpen(client: SimpWebSocketClient<SimpWebSocketHandler>) {
           connection = true
           logger.debug("WebSocketClient onOpen")
           val conn =
@@ -130,7 +132,7 @@ class BiliWSClient(
           this@BiliWSClient.onOpen()
         }
 
-        override fun onClose(client: WebSocketClient) {
+        override fun onClose(client: SimpWebSocketClient<SimpWebSocketHandler>) {
           connection = false
           logger.info("WebSocketClient onClose")
           try {
@@ -145,7 +147,7 @@ class BiliWSClient(
           }, 5, TimeUnit.SECONDS)
         }
 
-        override fun readMessage(client: WebSocketClient, msg: ByteBuffer) {
+        override fun readMessage(client: SimpWebSocketClient<SimpWebSocketHandler>, msg: ByteBuffer) {
           while (msg.readable != 0) {
             val head = BiliWSPackageHead().readFrom(msg)
             logger.debug("WebSocketClient onMessage: {}", msg)
@@ -232,7 +234,7 @@ class BiliWSClient(
           }
         }
 
-        override fun onError(client: WebSocketClient, e: Throwable) {
+        override fun onError(client: SimpWebSocketClient<SimpWebSocketHandler>, e: Throwable) {
           errLog.log(e)
           logger.error("WebSocketClient onError", e)
           client.close()
@@ -279,7 +281,6 @@ class BiliWSClient(
     vararg valuePath: String,
     crossinline action: BiliWSClient.(T) -> Unit,
   ): Listener = addTypedCmdListener(msg.value, *valuePath, action = action)
-
 
   inline fun <reified T : Any> addTypedDataCmdListener(
     msg: String,

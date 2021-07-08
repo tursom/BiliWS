@@ -1,11 +1,17 @@
 package cn.tursom.ws.danmu
 
 import cn.tursom.core.cast
+import cn.tursom.danmu.Record
 
 data class DanmuUserLevel(
   val level: Int,
-  val ranking: String
+  val ranking: String,
 ) {
+  fun toProtobuf(): Record.DanmuUserLevel = Record.DanmuUserLevel.newBuilder()
+    .setLevel(level)
+    .setRanking(ranking)
+    .build()
+
   companion object {
     fun parse(level: List<Any>): DanmuUserLevel {
       return DanmuUserLevel(
