@@ -7,7 +7,7 @@ option java_outer_classname = "Danmu";
 
 enum CmeEnum {
   // 未知
-  UNKNOWN                          = 0;
+  UNKNOWN                       = 0;
   // 活动旗帜更新 v2？
   ACTIVITY_BANNER_UPDATE_V2     = 1;
   // 组合结束？
