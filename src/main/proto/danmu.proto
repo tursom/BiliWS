@@ -5,6 +5,72 @@ option optimize_for = SPEED;
 package cn.tursom.danmu;
 option java_outer_classname = "Danmu";
 
+enum CmeEnum {
+  // 未知
+  UNKNOWN                          = 0;
+  // 活动旗帜更新 v2？
+  ACTIVITY_BANNER_UPDATE_V2     = 1;
+  // 组合结束？
+  COMBO_END                     = 2;
+  // 组合发送？
+  COMBO_SEND                    = 3;
+  // 弹幕信息
+  DANMU_MSG                     = 4;
+  // 进入效果？
+  ENTRY_EFFECT                  = 5;
+  // GUARD购买？
+  GUARD_BUY                     = 6;
+  // GUARD抽奖开始？
+  GUARD_LOTTERY_START           = 7;
+  // GUARD信息？
+  GUARD_MSG                     = 8;
+  // 直播开始
+  LIVE                          = 9;
+  // 房间块信息？
+  ROOM_BLOCK_MSG                = 10;
+  // 房间变更？
+  ROOM_CHANGE                   = 11;
+  // 房间等级？
+  ROOM_RANK                     = 12;
+  // 房间准确时间信息更新？
+  ROOM_REAL_TIME_MESSAGE_UPDATE = 13;
+  // 提示信息？
+  NOTICE_MSG                    = 14;
+  // 准备中？
+  PREPARING                     = 15;
+  // 发送礼物
+  SEND_GIFT                     = 16;
+  // 超级聊天消息？SC？
+  SUPER_CHAT_MESSAGE            = 17;
+  // 超级聊天消息日语？
+  SUPER_CHAT_MESSAGE_JPN        = 18;
+  // 用户吐司信息？
+  USER_TOAST_MSG                = 19;
+  // 周星钟？
+  WEEK_STAR_CLOCK               = 20;
+  // 欢迎？
+  WELCOME                       = 21;
+  // 欢迎舰长？
+  WELCOME_GUARD                 = 22;
+  // 希望瓶
+  WISH_BOTTLE                   = 23;
+  // 开始抽奖
+  RAFFLE_START                  = 24;
+  // 抽奖结束
+  RAFFLE_END                    = 25;
+  ROOM_SKIN_MSG                 = 26;
+  SPECIAL_GIFT                  = 27;
+  ROOM_SILENT_ON                = 28;
+  HOUR_RANK_AWARDS              = 29;
+  ROOM_BOX_MASTER               = 30;
+  PK_BATTLE_ENTRANCE            = 31;
+  SYS_GIFT                      = 32;
+  new_anchor_reward             = 33;
+  VOICE_JOIN_LIST               = 34;
+  GUARD_ACHIEVEMENT_ROOM        = 35;
+  VOICE_JOIN_ROOM_COUNT_INFO    = 36;
+}
+
 message DanmuInfo {
   string         danmu      = 1;
   DanmuMetadata  metadata   = 2;
