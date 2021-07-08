@@ -16,6 +16,58 @@ message DanmuInfo {
   string         originData = 8;
 }
 
+message Gift {
+  string          action               = 1;
+  int32           addFollow            = 2;
+  string          batch_combo_id       = 3;
+  BatchComboSend  batch_combo_send     = 4;
+  string          beatId               = 5;
+  string          biz_source           = 6;
+  int32           broadcast_id         = 7;
+  string          coin_type            = 8;
+  ComboSend       combo_send           = 9;
+  int32           combo_stay_time      = 10;
+  int32           combo_total_coin     = 11;
+  int32           crit_prob            = 12;
+  int32           demarcation          = 13;
+  int32           draw                 = 14;
+  int32           effect               = 15;
+  int32           effect_block         = 16;
+  int32           eventNum             = 17;
+  int32           eventScore           = 18;
+  string          face                 = 19;
+  int32           giftId               = 20;
+  string          giftName             = 21;
+  int32           giftType             = 22;
+  int32           gold                 = 23;
+  int32           guard_level          = 24;
+  bool            is_first             = 25;
+  repeated string medal                = 26;
+  string          metadata             = 27;
+  int32           newMedal             = 28;
+  int32           newTitle             = 29;
+  repeated string notice_msg           = 30;
+  int32           num                  = 31;
+  int32           price                = 32;
+  int32           rcost                = 33;
+  int32           remain               = 34;
+  string          rnd                  = 35;
+  int32           silver               = 36;
+  bool            smallTVCountFlag     = 37;
+  repeated string smalltv_msg          = 38;
+  int32           super                = 39;
+  int32           super_batch_gift_num = 40;
+  int32           super_gift_num       = 41;
+  string          tag_image            = 42;
+  string          tid                  = 43;
+  int32           timestamp            = 44;
+  string          title                = 45;
+  repeated string top_list             = 46;
+  int32           total_coin           = 47;
+  int32           uid                  = 48;
+  string          uname                = 49;
+}
+
 message DanmuMetadata {
   int64 time        = 1;
   bool  rhythmStorm = 2;
@@ -48,4 +100,24 @@ enum NavigationEnum {
   CAPTAIN  = 3;
 }
 
+message ComboSend {
+  string action    = 1;
+  string combo_id  = 2;
+  int32  combo_num = 3;
+  int32  gift_id   = 4;
+  string gift_name = 5;
+  int32  gift_num  = 6;
+  int32  uid       = 7;
+  string uname     = 8;
+}
 
+message BatchComboSend {
+  string action          = 1;
+  string batch_combo_id  = 2;
+  int32  batch_combo_num = 3;
+  int32  gift_id         = 4;
+  string gift_name       = 5;
+  int32  gift_num        = 6;
+  int32  uid             = 7;
+  string uname           = 8;
+}
