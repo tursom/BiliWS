@@ -2,15 +2,12 @@ package cn.tursom.ws
 
 import cn.tursom.*
 import cn.tursom.core.*
-import cn.tursom.core.fromJson
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
 import cn.tursom.core.reflect.Parser
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
-import cn.tursom.core.ws.WebSocketClient
-import cn.tursom.core.ws.WebSocketHandler
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
@@ -63,10 +60,11 @@ class BiliWSClient(
   private var liveStart: Long = liveTime?.getLiveTime(roomId) ?: if (living) System.currentTimeMillis() else 0
   val liveStartTime get() = liveStart
 
+  private val hook = ShutdownHook.addHook(true) {
+    close()
+  }
+
   init {
-    ShutdownHook.addHook {
-      close()
-    }
     addCmdListener(CmdEnum.LIVE) {
       living = true
       roomInfo = runBlocking { RoomUtils.getRoomInfo(roomId) }

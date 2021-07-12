@@ -1,8 +1,6 @@
 package cn.tursom
 
-import cn.tursom.core.HttpRequest
 import cn.tursom.core.fromJson
-import cn.tursom.core.toUTF8String
 import cn.tursom.room.*
 import cn.tursom.utils.AsyncHttpRequest
 
