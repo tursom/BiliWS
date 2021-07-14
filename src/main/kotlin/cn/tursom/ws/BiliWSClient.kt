@@ -50,11 +50,7 @@ class BiliWSClient(
 
   @Volatile
   var living: Boolean = LiveStatusEnum.valueOf(roomInfo.live_status) == LiveStatusEnum.LIVING
-    set(value) {
-      if (Throwable().stackTrace[1].className == BiliWSClient::class.java.name) {
-        field = value
-      }
-    }
+    private set
 
   @Volatile
   private var liveStart: Long = liveTime?.getLiveTime(roomId) ?: if (living) System.currentTimeMillis() else 0
