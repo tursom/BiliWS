@@ -2,5 +2,5 @@
 .idea
 build
 gradle
-gradle.properties
+local.properties
 src/main/java/cn/tursom/danmu
