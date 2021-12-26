@@ -2,13 +2,14 @@ package cn.tursom.ws
 
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
+import cn.tursom.core.toUTF8String
 
 data class BiliWSPackageHead(
   var totalSize: Int = 0,
   var headSize: Short = 16,
   var version: Short = 0,
   var code: Int = 0,
-  var sequence: Int = 1
+  var sequence: Int = 1,
 ) {
   fun toByteArray(): ByteArray {
     val buffer = HeapByteBuffer(16)

@@ -9,7 +9,7 @@ import org.junit.Test
 class WSConnectTest {
   @Test
   fun testConnect(): Unit = runBlocking {
-    val biliWSClient = BiliWSClient(3044248, onClose = {
+    val biliWSClient = BiliWSClient(367966, onClose = {
       notifyAll {
       }
     })

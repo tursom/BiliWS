@@ -55,10 +55,11 @@ dependencies {
   implementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.9.3")
   implementation("com.google.code.gson:gson:2.8.9")
   implementation(group = "org.mapdb", name = "mapdb", version = "3.0.8")
+  implementation(group = "io.netty", name = "netty-tcnative-boringssl-static", version = "2.0.46.Final")
 
   testImplementation(group = "junit", name = "junit", version = "4.12")
-  testImplementation(group = "ch.qos.logback", name = "logback-core", version = "1.2.3")
-  testImplementation("ch.qos.logback:logback-classic:1.2.9")
+  testImplementation(group = "ch.qos.logback", name = "logback-core", version = "1.2.10")
+  //testImplementation("ch.qos.logback:logback-classic:1.2.10")
 }
 
 tasks.withType<KotlinCompile>().configureEach {

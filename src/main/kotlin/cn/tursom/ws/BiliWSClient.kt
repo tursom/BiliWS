@@ -143,22 +143,33 @@ class BiliWSClient(
         }
 
         override fun readMessage(client: SimpWebSocketClient<SimpWebSocketHandler>, msg: ByteBuffer) {
-          while (msg.readable != 0) {
-            val head = BiliWSPackageHead().readFrom(msg)
-            logger.debug("WebSocketClient onMessage: {}", msg)
-            logger.debug("WebSocketClient onMessage header: {}", head)
-            val bytes = msg.getBytes(head.totalSize - head.headSize)
-            when (head.version.toInt()) {
-              2 -> @Suppress("NAME_SHADOWING") {
-                val msg = HeapByteBuffer(bytes.undeflate())
-                while (msg.readable != 0) {
-                  val head = BiliWSPackageHead().readFrom(msg)
-                  val bytes = msg.getBytes(head.totalSize - head.headSize)
-                  handleMessage(head, bytes)
+          try {
+            while (msg.readable != 0) {
+              val head = BiliWSPackageHead().readFrom(msg)
+              logger.debug("WebSocketClient onMessage: {}", msg)
+              logger.debug("WebSocketClient onMessage header: {}", head)
+              val bytes = msg.getBytes(head.totalSize - head.headSize)
+              when (head.version.toInt()) {
+                2 -> @Suppress("NAME_SHADOWING") {
+                  val msg = HeapByteBuffer(bytes.undeflate())
+                  while (msg.readable != 0) {
+                    val head = BiliWSPackageHead().readFrom(msg)
+                    val bytes = msg.getBytes(head.totalSize - head.headSize)
+                    handleMessage(head, bytes)
+                  }
                 }
+                1 -> {
+                  if (head.version.toInt() == 1 && msg.readable - (head.totalSize - head.headSize) > 0) {
+                    msg.getBytes(15)
+                  }
+                }
+                0 -> handleMessage(head, bytes)
               }
-              0 -> handleMessage(head, bytes)
             }
+          } catch (e: Exception) {
+            msg.readPosition = 0
+            val bytes = msg.getBytes()
+            log.error("exception bytes: ", bytes.toHexString(), e)
           }
         }
 
@@ -337,7 +348,9 @@ class BiliWSClient(
         try {
           clientCollection.forEach { (it, connectionCheckFaildTimes) ->
             try {
-              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get().isPower2()) {
+              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get()
+                  .isPower2()
+              ) {
                 if (it.connection) {
                   connectionCheckFaildTimes.set(0)
                   return@forEach
