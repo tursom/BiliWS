@@ -8,10 +8,10 @@ import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
 import cn.tursom.core.reflect.Parser
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
+import cn.tursom.http.client.AsyncHttpRequest
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
-import cn.tursom.utils.AsyncHttpRequest
 import cn.tursom.ws.danmu.DanmuInfo
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.GlobalScope

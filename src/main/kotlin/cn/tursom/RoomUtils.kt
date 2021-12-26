@@ -1,8 +1,8 @@
 package cn.tursom
 
 import cn.tursom.core.fromJson
+import cn.tursom.http.client.AsyncHttpRequest
 import cn.tursom.room.*
-import cn.tursom.utils.AsyncHttpRequest
 
 @Suppress("MemberVisibilityCanBePrivate")
 object RoomUtils {
@@ -18,7 +18,7 @@ object RoomUtils {
       ),
       headers = getBiliLiveJsonAPIHeaders(roomId)
     )
-    val roomInfoStr = response.body()!!.string()
+    val roomInfoStr = response.body!!.string()
     val room = roomInfoStr.fromJson<RoomInfo>()
     return room.data
   }

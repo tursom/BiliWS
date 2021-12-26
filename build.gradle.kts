@@ -52,12 +52,13 @@ dependencies {
 
   api(group = "com.google.protobuf", name = "protobuf-java", version = "3.17.3")
   api(group = "org.slf4j", name = "slf4j-api", version = "1.7.29")
-  implementation("com.google.code.gson:gson:2.8.2")
+  implementation(group = "com.squareup.okhttp3", name = "okhttp", version = "4.9.3")
+  implementation("com.google.code.gson:gson:2.8.9")
   implementation(group = "org.mapdb", name = "mapdb", version = "3.0.8")
 
   testImplementation(group = "junit", name = "junit", version = "4.12")
   testImplementation(group = "ch.qos.logback", name = "logback-core", version = "1.2.3")
-  testImplementation("ch.qos.logback:logback-classic:1.2.3")
+  testImplementation("ch.qos.logback:logback-classic:1.2.9")
 }
 
 tasks.withType<KotlinCompile>().configureEach {
