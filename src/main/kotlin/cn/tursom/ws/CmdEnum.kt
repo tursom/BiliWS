@@ -46,7 +46,7 @@ enum class CmdEnum(val value: String) {
   // 提示信息？
   NOTICE_MSG("NOTICE_MSG"),
 
-  // 准备中？
+  // 准备中？，下播
   PREPARING("PREPARING"),
 
   // 发送礼物

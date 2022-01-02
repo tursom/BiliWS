@@ -13,6 +13,7 @@ import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
 import cn.tursom.ws.danmu.DanmuInfo
+import cn.tursom.ws.gift.Gift
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -266,6 +267,12 @@ class BiliWSClient(
 
   fun addCmdListener(msg: CmdEnum, action: BiliWSClient.(Map<String, Any>) -> Unit): Listener {
     return addCmdListener(msg.value, action)
+  }
+
+  fun addGiftListener(action: BiliWSClient.(Gift) -> Unit): Listener {
+    return addCmdListener(CmdEnum.SEND_GIFT) {
+      action(Parser.parse(it["data"]!!, Gift::class.java)!!)
+    }
   }
 
   inline fun <reified T : Any> addTypedCmdListener(
