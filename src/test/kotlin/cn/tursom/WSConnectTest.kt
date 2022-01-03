@@ -12,13 +12,13 @@ import org.junit.Test
 class WSConnectTest {
   @Test
   fun testConnect(): Unit = runBlocking {
-    val biliWSClient = BiliWSClient(367966, onClose = {
+    val biliWSClient = BiliWSClient(8584389, onClose = {
       notifyAll {
       }
     })
-    biliWSClient.addGiftListener {
-      println(it)
-    }
+//    biliWSClient.addGiftListener {
+//      println(it)
+//    }
     biliWSClient.addDanmuListener {
       println(it)
     }

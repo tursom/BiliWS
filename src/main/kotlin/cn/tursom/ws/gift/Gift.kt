@@ -8,12 +8,12 @@ data class Gift(
   val action: String,
   val addFollow: Int,
   val batch_combo_id: String,
-  val batch_combo_send: BatchComboSend,
+  val batch_combo_send: BatchComboSend?,
   val beatId: String,
   val biz_source: String,
   val broadcast_id: Int,
   val coin_type: String,
-  val combo_send: ComboSend,
+  val combo_send: ComboSend?,
   val combo_stay_time: Int,
   val combo_total_coin: Int,
   val crit_prob: Int,
@@ -30,11 +30,11 @@ data class Gift(
   val gold: Int,
   val guard_level: Int,
   val is_first: Boolean,
-  val medal: List<Any>,
-  val metadata: String,
+  val medal: List<Any>?,
+  val metadata: String?,
   val newMedal: Int,
   val newTitle: Int,
-  val notice_msg: List<Any>,
+  val notice_msg: List<Any>?,
   val num: Int,
   val price: Int,
   val rcost: Int,
@@ -42,30 +42,31 @@ data class Gift(
   val rnd: String,
   val silver: Int,
   val smallTVCountFlag: Boolean,
-  val smalltv_msg: List<Any>,
+  val smalltv_msg: List<Any>?,
   val `super`: Int,
   val super_batch_gift_num: Int,
   val super_gift_num: Int,
   val tag_image: String,
   val tid: String,
   val timestamp: Int,
-  val title: String,
-  val top_list: List<Any>,
+  val title: String?,
+  val top_list: List<Any>?,
   val total_coin: Int,
   val uid: Int,
   val uname: String,
+  val medal_info: MedalInfo?,
 ) {
   fun toProto(): Danmu.Gift? {
     return Danmu.Gift.newBuilder()
       .setAction(action)
       .setAddFollow(addFollow)
       .setBatchComboId(batch_combo_id)
-      .setBatchComboSend(batch_combo_send.toProto())
+      .setBatchComboSend(batch_combo_send?.toProto() ?: Danmu.BatchComboSend.getDefaultInstance())
       .setBeatId(beatId)
       .setBizSource(biz_source)
       .setBroadcastId(broadcast_id)
       .setCoinType(coin_type)
-      .setComboSend(combo_send.toProto())
+      .setComboSend(combo_send?.toProto() ?: Danmu.ComboSend.getDefaultInstance())
       .setComboStayTime(combo_stay_time)
       .setComboTotalCoin(combo_total_coin)
       .setCritProb(crit_prob)
@@ -82,11 +83,11 @@ data class Gift(
       .setGold(gold)
       .setGuardLevel(guard_level)
       .setIsFirst(is_first)
-      .addAllMedal(medal.map { it.toJson() })
-      .setMetadata(metadata)
+      .addAllMedal(medal?.map { it.toJson() } ?: emptyList())
+      .setMetadata(metadata ?: "")
       .setNewMedal(newMedal)
       .setNewTitle(newTitle)
-      .addAllNoticeMsg(notice_msg.map { it.toJson() })
+      .addAllNoticeMsg(notice_msg?.map { it.toJson() } ?: emptyList())
       .setNum(num)
       .setPrice(price)
       .setRcost(rcost)
@@ -94,18 +95,19 @@ data class Gift(
       .setRnd(rnd)
       .setSilver(silver)
       .setSmallTVCountFlag(smallTVCountFlag)
-      .addAllSmalltvMsg(smalltv_msg.map { it.toJson() })
+      .addAllSmalltvMsg(smalltv_msg?.map { it.toJson() } ?: emptyList())
       .setSuper(`super`)
       .setSuperBatchGiftNum(super_batch_gift_num)
       .setSuperGiftNum(super_gift_num)
       .setTagImage(tag_image)
       .setTid(tid)
       .setTimestamp(timestamp)
-      .setTitle(title)
-      .addAllTopList(top_list.map { it.toJson() })
+      .setTitle(title ?: "")
+      .addAllTopList(top_list?.map { it.toJson() } ?: emptyList())
       .setTotalCoin(total_coin)
       .setUid(uid)
       .setUname(uname)
+      .setMedalInfo(medal_info?.toProto() ?: Danmu.MedalInfo.getDefaultInstance())
       .build()
   }
 
@@ -159,7 +161,8 @@ data class Gift(
       gift.topListList,
       gift.totalCoin,
       gift.uid,
-      gift.uname
+      gift.uname,
+      MedalInfo.fromProto(gift.medalInfo)
     )
   }
 }
