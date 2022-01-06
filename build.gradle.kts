@@ -1,6 +1,5 @@
 import com.google.protobuf.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.*
 
 buildscript {
   repositories {
@@ -22,7 +21,7 @@ buildscript {
 apply(plugin = "ts-gradle")
 
 plugins {
-  kotlin("jvm") version "1.5.20"
+  kotlin("jvm") version "1.6.10"
   `maven-publish`
   id("com.google.protobuf") version "0.8.16"
 }
@@ -55,6 +54,8 @@ dependencies {
   api("cn.tursom", "ts-datastruct", tursomServerVersion)
   api("cn.tursom", "ts-core", tursomServerVersion)
   api("cn.tursom", "ts-log", tursomServerVersion)
+  api("cn.tursom", "ts-coroutine", tursomServerVersion)
+  api("cn.tursom", "ts-observer", tursomServerVersion)
 
   api(group = "com.google.protobuf", name = "protobuf-java", version = "3.17.3")
   api(group = "org.slf4j", name = "slf4j-api", version = "1.7.29")
@@ -64,7 +65,9 @@ dependencies {
   implementation(group = "io.netty", name = "netty-tcnative-boringssl-static", version = "2.0.46.Final")
 
   testImplementation(group = "junit", name = "junit", version = "4.12")
-  testImplementation(group = "ch.qos.logback", name = "logback-core", version = "1.2.10")
+  //testImplementation(group = "ch.qos.logback", name = "logback-core", version = "1.2.10")
+  testImplementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.10")
+  testImplementation(group = "xerces", name = "xercesImpl", version = "2.11.0")
 }
 
 tasks.withType<KotlinCompile>().configureEach {

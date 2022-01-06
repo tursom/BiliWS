@@ -1,64 +1,76 @@
 package cn.tursom.ws
 
-import cn.tursom.*
-import cn.tursom.core.*
-import cn.tursom.core.buffer.ByteBuffer
-import cn.tursom.core.buffer.impl.HeapByteBuffer
+import cn.tursom.Listener
+import cn.tursom.LiveStatusEnum
+import cn.tursom.RoomUtils
+import cn.tursom.core.coroutine.GlobalScope
 import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
+import cn.tursom.core.delegation.filter
+import cn.tursom.core.delegation.locked
+import cn.tursom.core.delegation.observer.Listenable
+import cn.tursom.core.delegation.observer.listenable
+import cn.tursom.core.fromJson
+import cn.tursom.core.minutes
 import cn.tursom.core.reflect.Parser
+import cn.tursom.core.uncheckedCast
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
+import cn.tursom.http.client.AsyncHttpRequest
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
-import cn.tursom.utils.AsyncHttpRequest
 import cn.tursom.ws.danmu.DanmuInfo
+import cn.tursom.ws.gift.Gift
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.GlobalScope
+import io.netty.util.AttributeMap
+import io.netty.util.DefaultAttributeMap
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.Closeable
-import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicInteger
+import java.lang.ref.SoftReference
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.annotation.PostConstruct
 import kotlin.collections.set
 
-
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 class BiliWSClient(
   val roomId: Int,
-  private val onOpen: BiliWSClient.() -> Unit = {},
+  internal val onOpen: BiliWSClient.() -> Unit = {},
   private val liveTime: LiveTime? = null,
-  private val onClose: BiliWSClient.() -> Unit = {},
-) : Closeable {
-  @Volatile
-  private var connection: Boolean = false
-  private var roomInfo: RoomInfoData = runBlocking { RoomUtils.getRoomInfo(roomId) }
+  internal val onClose: BiliWSClient.() -> Unit = {},
+) : Closeable, AttributeMap by DefaultAttributeMap() {
+  var autoReconnect: Boolean = true
+  private val connection: Boolean get() = client?.closed ?: false
+  var roomInfo: RoomInfoData = runBlocking { RoomUtils.getRoomInfo(roomId) }
+    private set
   private var client: SimpWebSocketClient<SimpWebSocketHandler>? = null
   private val livingListenerMap = ConcurrentLinkedList<() -> Unit>()
   private val danmuListenerMap = ConcurrentLinkedList<(DanmuInfo) -> Unit>()
   private val cmdListenerMap =
     ConcurrentHashMap<String, ConcurrentLinkedList<BiliWSClient.(Map<String, Any>) -> Unit>>()
   private val codeListenerMap = ConcurrentHashMap<Int, ConcurrentLinkedList<BiliWSClient.(ByteArray) -> Unit>>()
-
+  private var reconnectJob: Job? = null
+  private var connectLock = AtomicBoolean()
 
   val userInfo = runBlocking { RoomUtils.getLiveUserInfo(roomInfo.room_id) }
 
-  //val userInfo = Unit.clone<LiveUserData>()
   @Suppress("UNNECESSARY_SAFE_CALL", "USELESS_ELVIS")
   val userName: String
     get() = userInfo.info?.uname ?: roomId.toString()
 
-  @Volatile
-  var living: Boolean = LiveStatusEnum.valueOf(roomInfo.live_status) == LiveStatusEnum.LIVING
+
+  @OptIn(Listenable::class)
+  var living: Boolean by listenable(LiveStatusEnum.valueOf(roomInfo.live_status) == LiveStatusEnum.LIVING)
+    .filter { old, new -> old != new }
+    .locked
     private set
 
   @Volatile
   private var liveStart: Long = liveTime?.getLiveTime(roomId) ?: if (living) System.currentTimeMillis() else 0
   val liveStartTime get() = liveStart
-
-  private val hook = ShutdownHook.addHook(true) {
-    close()
-  }
 
   init {
     addCmdListener(CmdEnum.LIVE) {
@@ -72,171 +84,31 @@ class BiliWSClient(
     }
   }
 
-  fun getRoomInfo() = roomInfo
-
   @PostConstruct
   suspend fun connect(onOpen: BiliWSClient.() -> Unit = this.onOpen) {
-    if (clientCollection.firstOrNull { it.first == this } == null) {
-      clientCollection.add(this to AtomicInteger())
+    if (!connectLock.compareAndSet(false, true)) {
+      return
     }
+    try {
+      val roomInit = AsyncHttpRequest.getStr("https://api.live.bilibili.com/room/v1/Room/room_init",
+        mapOf("id" to roomId.toString())).fromJson<RoomInit>()
 
-    val roomInit = AsyncHttpRequest.getStr(
-      "https://api.live.bilibili.com/room/v1/Room/room_init",
-      mapOf("id" to roomId.toString())
-    ).fromJson<RoomInit>()
-
-    logger.debug("room init: {}", roomInit)
-    client?.close()
-    val serverConf = RoomUtils.getLiveServerConf(roomInfo.room_id).data
-    val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
-    val client = SimpWebSocketClient(
-      "ws${if (wsServer.wss_port != null) "s" else ""}://${
+      logger.debug("room init: {}", roomInit)
+      client?.close()
+      val serverConf = RoomUtils.getLiveServerConf(roomInfo.room_id).data
+      val wsServer = serverConf.host_server_list.first { it.wss_port != null || it.ws_port != null }
+      val client = SimpWebSocketClient("ws${if (wsServer.wss_port != null) "s" else ""}://${
         wsServer.host
       }:${wsServer.wss_port}/sub".apply {
         logger.debug("connect to $this")
-      },
-      object : SimpWebSocketHandler {
-        lateinit var future: Future<*>
-        override fun onOpen(client: SimpWebSocketClient<SimpWebSocketHandler>) {
-          connection = true
-          logger.debug("WebSocketClient onOpen")
-          val conn =
-            """{"uid": 0,"roomid": ${roomInit.data.room_id},"protover": 2,"platform": "web","clientver": "1.12.0","type": 2,"key":"${serverConf.token}"}"""
-          logger.debug("msg: {}", +{ conn })
-          val msg = conn.toByteArray()
-          val data = HeapByteBuffer(16 + msg.size)
-          BiliWSPackageHead(16 + msg.size, 16, 1, 7, 1).apply {
-            logger.debug("packet header: {}, {}", this, +{ toByteArray().toHexString() })
-          }.writeTo(data)
-          data.put(msg)
-          //logger.debug("buffer: {}", data.array.toHexString())
-          client.write(data)
-          future = threadPool.scheduleAtFixedRate({
-            try {
-              val buffer = HeapByteBuffer(31)
-              BiliWSPackageHead(31, 16, code = 2, sequence = 1, version = 1).writeTo(buffer)
-              buffer.put("[object Object]")
-              client.write(buffer)
-              logger.debug("BiliWSClient send heart beat, room id: {}", roomId)
-            } catch (e: Throwable) {
-              errLog.log(e)
-              logger.error("heart beat send exception: {}", e)
-              throw e
-            }
-          }, 0, 30, TimeUnit.SECONDS)
-          this@BiliWSClient.onOpen()
-        }
-
-        override fun onClose(client: SimpWebSocketClient<SimpWebSocketHandler>) {
-          connection = false
-          logger.info("WebSocketClient onClose")
-          try {
-            future.cancel(true)
-          } catch (e: Throwable) {
-          }
-          onClose()
-          threadPool.schedule({
-            GlobalScope.launch {
-              connect()
-            }
-          }, 5, TimeUnit.SECONDS)
-        }
-
-        override fun readMessage(client: SimpWebSocketClient<SimpWebSocketHandler>, msg: ByteBuffer) {
-          while (msg.readable != 0) {
-            val head = BiliWSPackageHead().readFrom(msg)
-            logger.debug("WebSocketClient onMessage: {}", msg)
-            logger.debug("WebSocketClient onMessage header: {}", head)
-            val bytes = msg.getBytes(head.totalSize - head.headSize)
-            when (head.version.toInt()) {
-              2 -> @Suppress("NAME_SHADOWING") {
-                val msg = HeapByteBuffer(bytes.undeflate())
-                while (msg.readable != 0) {
-                  val head = BiliWSPackageHead().readFrom(msg)
-                  val bytes = msg.getBytes(head.totalSize - head.headSize)
-                  handleMessage(head, bytes)
-                }
-              }
-              0 -> handleMessage(head, bytes)
-            }
-          }
-        }
-
-        fun handleMessage(head: BiliWSPackageHead, bytes: ByteArray) {
-          logger.debug("WebSocketClient onMessage header: {}", head)
-          logger.trace(
-            "WebSocketClient onMessage msg:\n|- hex: {}\n|- UTF-8: {}",
-            +{ bytes.toHexString() },
-            +{ bytes.toUTF8String() }
-          )
-          logger.debug(
-            "WebSocketClient onMessage msg: {}",
-            +{ bytes.toUTF8String() }
-          )
-          threadPool.execute {
-            @Suppress("NON_EXHAUSTIVE_WHEN")
-            when (head.code) {
-              BiliLiveWSCode.SEND_MSG_REPLY.code -> {
-                logger.debug("SEND_MSG_REPLY: {}", BiliLiveWSCode.SEND_MSG_REPLY)
-                val data = gson.fromJson<Map<String, Any>>(bytes.toUTF8String())
-                val cmd = data["cmd"]?.cast<String>()!!
-                when (cmd) {
-                  "LIVE" -> livingListenerMap.forEach { action ->
-                    try {
-                      action()
-                    } catch (e: Throwable) {
-                      errLog.log(e)
-                      logger.error("an exception caused on handle start live", e)
-                    }
-                  }
-                  "DANMU_MSG" -> {
-                    val danmu = DanmuInfo.parse(data["info"]?.cast()!!)
-                    danmuListenerMap.forEach { action ->
-                      try {
-                        action(danmu)
-                      } catch (e: Throwable) {
-                        errLog.log(e)
-                        logger.error("an exception caused on handle danmu", e)
-                      }
-                    }
-                  }
-                }
-                listOfNotNull(cmdListenerMap[cmd], cmdListenerMap[CmdEnum.ALL.value]).forEach {
-                  it.forEach { action ->
-                    try {
-                      this@BiliWSClient.action(data)
-                    } catch (e: Throwable) {
-                      errLog.log(e)
-                      logger.error("an exception caused on handle cmd: {}", cmd, e)
-                    }
-                  }
-                }
-              }
-              BiliLiveWSCode.HEARTBEAT_REPLY.code -> logger.debug(
-                "heart beat response from server: {}",
-                HeapByteBuffer(bytes).getInt()
-              )
-              else -> logger.warn("unsupported code: {}", head.code)
-            }
-            codeListenerMap[head.code]?.forEach {
-              try {
-                this@BiliWSClient.it(bytes)
-              } catch (e: Throwable) {
-                errLog.log(e)
-                logger.error("an exception caused on handle code {}", head.code, e)
-              }
-            }
-          }
-        }
-
-        override fun onError(client: SimpWebSocketClient<SimpWebSocketHandler>, e: Throwable) {
-          errLog.log(e)
-          logger.error("WebSocketClient onError", e)
-          client.close()
-        }
-      })
-    this.client = client
-    client.open()
+      }, BiliWSWebSocketHandler(this, roomInit, serverConf, roomId, connectLock,
+        livingListenerMap, danmuListenerMap, cmdListenerMap, codeListenerMap))
+      this.client = client
+      client.open()
+    } catch (e: Exception) {
+      connectLock.set(false)
+      throw e
+    }
   }
 
   fun addLivingListener(action: () -> Unit): Listener {
@@ -257,6 +129,12 @@ class BiliWSClient(
     return addCmdListener(msg.value, action)
   }
 
+  fun addGiftListener(action: BiliWSClient.(Gift) -> Unit): Listener {
+    return addCmdListener(CmdEnum.SEND_GIFT) {
+      action(Parser.parse(it["data"]!!, Gift::class.java)!!)
+    }
+  }
+
   inline fun <reified T : Any> addTypedCmdListener(
     msg: String,
     vararg valuePath: String,
@@ -265,7 +143,7 @@ class BiliWSClient(
     return addCmdListener(msg) {
       var data: Any = it
       valuePath.forEach { key ->
-        data = data.cast<Map<String, Any>>()[key] ?: return@addCmdListener
+        data = data.uncheckedCast<Map<String, Any>>()[key] ?: return@addCmdListener
       }
       this.action(Parser.parse(data, T::class.java)!!)
     }
@@ -300,7 +178,7 @@ class BiliWSClient(
       list = this[key]
       if (list == null) {
         list = ConcurrentLinkedList()
-        this[key] = list.cast()
+        this[key] = list.uncheckedCast()
       }
     }
     val iterator = list!!.addAndGetIterator(value)
@@ -318,51 +196,40 @@ class BiliWSClient(
   }
 
   override fun close() {
-    clientCollection.removeAll { it.first == this }
+    reconnectJob?.cancel()
     client?.close()
   }
 
   companion object : Slf4jImpl() {
-    // 用来监视ws连接情况的集合
-    private val clientCollection: MutableCollection<Pair<BiliWSClient, AtomicInteger>> = ConcurrentLinkedQueue()
-    val gson = GsonBuilder()
-      .registerTypeAdapterFactory(DataTypeAdaptor.FACTORY)
-      .create()
-    private val threadNumber = AtomicInteger(0)
-    private val threadPool = ScheduledThreadPoolExecutor(
-      Runtime.getRuntime().availableProcessors(),
-      ThreadFactory { Thread(it, "BiliWSClientWorker-${threadNumber.incrementAndGet()}") }
-    ).apply {
-      scheduleAtFixedRate({
-        try {
-          clientCollection.forEach { (it, connectionCheckFaildTimes) ->
-            try {
-              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get().isPower2()) {
-                if (it.connection) {
-                  connectionCheckFaildTimes.set(0)
-                  return@forEach
-                }
-                GlobalScope.launch {
-                  it.connect()
-                }
-              }
-            } catch (e: Exception) {
-            }
-          }
-        } catch (e: Throwable) {
-          errLog.log(e)
-          logger.error("reconnect exception: {}", e)
-          throw e
+    val gson = GsonBuilder().registerTypeAdapterFactory(DataTypeAdaptor.FACTORY).create()
+
+    suspend fun reconnect(biliWSClient: BiliWSClient) {
+      while (!biliWSClient.connection) {
+        biliWSClient.connect()
+        delay(1.minutes().toMillis())
+      }
+    }
+
+    private fun listen(biliWSClient: BiliWSClient) = GlobalScope.launch {
+      val reference = SoftReference(biliWSClient)
+      var connectionCheckFailedTimes = 0
+      while (true) {
+        delay(1.minutes().toMillis())
+        val wsClient = reference.get() ?: return@launch
+        connectionCheckFailedTimes++
+        if (wsClient.connection) {
+          connectionCheckFailedTimes = 0
+        } else if (connectionCheckFailedTimes >= 4) {
+          reconnect(wsClient)
         }
-      }, 0, 1, TimeUnit.MINUTES)
+      }
     }
 
     private fun Int.isPower2(): Boolean {
       var n = when {
         this > 0 -> this
         this == 0 -> return true
-        this < 0 -> -this
-        else -> return false
+        else -> -this // this < 0
       }
       while (n != 1) {
         if (n and 1 == 1) {
