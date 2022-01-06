@@ -8,12 +8,11 @@ import cn.tursom.core.datastruct.concurrent.ConcurrentLinkedList
 import cn.tursom.core.reflect.Parser
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
-import cn.tursom.http.client.AsyncHttpRequest
 import cn.tursom.log.impl.Slf4jImpl
 import cn.tursom.room.RoomInfoData
 import cn.tursom.storage.LiveTime
+import cn.tursom.utils.AsyncHttpRequest
 import cn.tursom.ws.danmu.DanmuInfo
-import cn.tursom.ws.gift.Gift
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -144,33 +143,22 @@ class BiliWSClient(
         }
 
         override fun readMessage(client: SimpWebSocketClient<SimpWebSocketHandler>, msg: ByteBuffer) {
-          try {
-            while (msg.readable != 0) {
-              val head = BiliWSPackageHead().readFrom(msg)
-              logger.debug("WebSocketClient onMessage: {}", msg)
-              logger.debug("WebSocketClient onMessage header: {}", head)
-              val bytes = msg.getBytes(head.totalSize - head.headSize)
-              when (head.version.toInt()) {
-                2 -> @Suppress("NAME_SHADOWING") {
-                  val msg = HeapByteBuffer(bytes.undeflate())
-                  while (msg.readable != 0) {
-                    val head = BiliWSPackageHead().readFrom(msg)
-                    val bytes = msg.getBytes(head.totalSize - head.headSize)
-                    handleMessage(head, bytes)
-                  }
+          while (msg.readable != 0) {
+            val head = BiliWSPackageHead().readFrom(msg)
+            logger.debug("WebSocketClient onMessage: {}", msg)
+            logger.debug("WebSocketClient onMessage header: {}", head)
+            val bytes = msg.getBytes(head.totalSize - head.headSize)
+            when (head.version.toInt()) {
+              2 -> @Suppress("NAME_SHADOWING") {
+                val msg = HeapByteBuffer(bytes.undeflate())
+                while (msg.readable != 0) {
+                  val head = BiliWSPackageHead().readFrom(msg)
+                  val bytes = msg.getBytes(head.totalSize - head.headSize)
+                  handleMessage(head, bytes)
                 }
-                1 -> {
-                  if (head.version.toInt() == 1 && msg.readable - (head.totalSize - head.headSize) > 0) {
-                    msg.getBytes(15)
-                  }
-                }
-                0 -> handleMessage(head, bytes)
               }
+              0 -> handleMessage(head, bytes)
             }
-          } catch (e: Exception) {
-            msg.readPosition = 0
-            val bytes = msg.getBytes()
-            log.error("exception bytes: ", bytes.toHexString(), e)
           }
         }
 
@@ -269,12 +257,6 @@ class BiliWSClient(
     return addCmdListener(msg.value, action)
   }
 
-  fun addGiftListener(action: BiliWSClient.(Gift) -> Unit): Listener {
-    return addCmdListener(CmdEnum.SEND_GIFT) {
-      action(Parser.parse(it["data"]!!, Gift::class.java)!!)
-    }
-  }
-
   inline fun <reified T : Any> addTypedCmdListener(
     msg: String,
     vararg valuePath: String,
@@ -355,9 +337,7 @@ class BiliWSClient(
         try {
           clientCollection.forEach { (it, connectionCheckFaildTimes) ->
             try {
-              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get()
-                  .isPower2()
-              ) {
+              if (connectionCheckFaildTimes.incrementAndGet() == 8 || connectionCheckFaildTimes.get().isPower2()) {
                 if (it.connection) {
                   connectionCheckFaildTimes.set(0)
                   return@forEach

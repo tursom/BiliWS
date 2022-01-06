@@ -3,4 +3,5 @@
 build
 gradle
 local.properties
+local.yml
 src/main/java/cn/tursom/danmu
