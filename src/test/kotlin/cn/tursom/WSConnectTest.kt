@@ -1,8 +1,8 @@
 package cn.tursom
 
-import cn.tursom.core.notifyAll
-import cn.tursom.core.toJson
-import cn.tursom.core.wait
+import cn.tursom.core.util.notifyAll
+import cn.tursom.core.util.toJson
+import cn.tursom.core.util.wait
 import cn.tursom.ws.BiliWSClient
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

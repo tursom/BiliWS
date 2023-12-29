@@ -9,10 +9,10 @@ import cn.tursom.core.delegation.filter
 import cn.tursom.core.delegation.locked
 import cn.tursom.core.delegation.observer.Listenable
 import cn.tursom.core.delegation.observer.listenable
-import cn.tursom.core.fromJson
-import cn.tursom.core.minutes
+import cn.tursom.core.util.fromJson
+import cn.tursom.core.util.minutes
 import cn.tursom.core.reflect.Parser
-import cn.tursom.core.uncheckedCast
+import cn.tursom.core.util.uncheckedCast
 import cn.tursom.core.ws.SimpWebSocketClient
 import cn.tursom.core.ws.SimpWebSocketHandler
 import cn.tursom.http.client.AsyncHttpRequest
@@ -32,7 +32,6 @@ import java.io.Closeable
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.annotation.PostConstruct
 import kotlin.collections.set
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
@@ -84,7 +83,6 @@ class BiliWSClient(
     }
   }
 
-  @PostConstruct
   suspend fun connect(onOpen: BiliWSClient.() -> Unit = this.onOpen) {
     if (!connectLock.compareAndSet(false, true)) {
       return

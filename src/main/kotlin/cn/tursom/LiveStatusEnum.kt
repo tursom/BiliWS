@@ -1,6 +1,6 @@
 package cn.tursom
 
-import cn.tursom.core.urlEncode
+import cn.tursom.core.util.urlEncode
 import cn.tursom.exception.LiveException
 
 enum class LiveStatusEnum {

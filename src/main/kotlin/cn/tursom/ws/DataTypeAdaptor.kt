@@ -1,7 +1,7 @@
 package cn.tursom.ws
 
-import cn.tursom.core.UncheckedCast
-import cn.tursom.core.cast
+import cn.tursom.core.util.UncheckedCast
+import cn.tursom.core.util.cast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter

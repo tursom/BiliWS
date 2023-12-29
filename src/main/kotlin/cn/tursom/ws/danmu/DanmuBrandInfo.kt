@@ -1,7 +1,7 @@
 package cn.tursom.ws.danmu
 
-import cn.tursom.core.UncheckedCast
-import cn.tursom.core.cast
+import cn.tursom.core.util.UncheckedCast
+import cn.tursom.core.util.cast
 import cn.tursom.danmu.Danmu
 
 @OptIn(UncheckedCast::class)

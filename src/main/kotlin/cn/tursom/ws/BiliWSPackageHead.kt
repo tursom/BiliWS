@@ -2,7 +2,7 @@ package cn.tursom.ws
 
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
-import cn.tursom.core.toUTF8String
+import cn.tursom.core.util.toUTF8String
 
 data class BiliWSPackageHead(
   var totalSize: Int = 0,

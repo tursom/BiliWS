@@ -1,7 +1,7 @@
 package cn.tursom.storage.impl
 
-import cn.tursom.core.UncheckedCast
-import cn.tursom.core.cast
+import cn.tursom.core.util.UncheckedCast
+import cn.tursom.core.util.cast
 import cn.tursom.core.datastruct.DefaultValueMap
 import cn.tursom.storage.LiveTime
 import org.mapdb.DB

@@ -1,6 +1,6 @@
 package cn.tursom
 
-import cn.tursom.core.fromJson
+import cn.tursom.core.util.fromJson
 import cn.tursom.http.client.AsyncHttpRequest
 import cn.tursom.room.*
 

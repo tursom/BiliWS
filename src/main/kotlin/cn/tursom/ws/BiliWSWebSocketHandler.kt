@@ -1,6 +1,6 @@
 package cn.tursom.ws
 
-import cn.tursom.core.*
+import cn.tursom.core.util.*
 import cn.tursom.core.buffer.ByteBuffer
 import cn.tursom.core.buffer.impl.HeapByteBuffer
 import cn.tursom.core.coroutine.GlobalScope

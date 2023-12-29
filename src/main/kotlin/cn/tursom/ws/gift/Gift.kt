@@ -1,6 +1,6 @@
 package cn.tursom.ws.gift
 
-import cn.tursom.core.toJson
+import cn.tursom.core.util.toJson
 import cn.tursom.danmu.Danmu
 
 @Suppress("unused")
